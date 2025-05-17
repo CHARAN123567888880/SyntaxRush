@@ -1,0 +1,226 @@
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Additional styles */
+.metric {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.metric span {
+    transition: color 0.3s ease;
+}
+
+.metric span:hover {
+    color: var(--accent-color);
+    animation: pulse 1s infinite;
+}
+
+/* Challenge completion animation */
+@keyframes success {
+    0% { background-color: var(--bg-secondary); }
+    50% { background-color: #4CAF50; }
+    100% { background-color: var(--bg-secondary); }
+}
+
+.challenge-complete {
+    animation: success 1s ease-in-out;
+}
+
+/* Button styles */
+button {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* Sidebar styles */
+.sidebar a {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.sidebar a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: var(--accent-color);
+    transition: width 0.3s ease;
+}
+
+.sidebar a:hover::after {
+    width: 100%;
+}
+
+/* Editor container styles */
+.editor-container {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.editor-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 2px solid transparent;
+    transition: border-color 0.3s ease;
+}
+
+.editor-container:focus-within::before {
+    border-color: var(--accent-color);
+}
+
+/* Loading animation */
+.loading {
+    position: relative;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--accent-color);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid #444;
+    }
+
+    .main-content {
+        height: calc(100vh - 200px);
+    }
+
+    .metrics-bar {
+        flex-wrap: wrap;
+    }
+
+    .metric {
+        flex: 1 1 50%;
+        margin: 5px 0;
+    }
+}
+
+/* Theme transition */
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #005999;
+}
+
+/* Tooltip styles */
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+[data-tooltip]:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-5px);
+}
+
+#key-progress .key-box {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    margin: 0 1px;
+    text-align: center;
+    line-height: 22px;
+    border-radius: 3px;
+    background: #333;
+    color: #fff;
+    font-weight: bold;
+    font-size: 14px;
+}
+#key-progress .key-correct { background: #4caf50; }
+#key-progress .key-wrong { background: #e57373; }
+#key-progress .key-current { background: #ffd54f; color: #222; }
+#wpm-delta, #accuracy-delta, #score-delta {
+    font-size: 12px;
+    margin-left: 2px;
+}
+#wpm-delta.negative, #accuracy-delta.negative, #score-delta.negative { color: #e57373; }
+#wpm-delta.positive, #accuracy-delta.positive, #score-delta.positive { color: #4caf50; }
+#goal-bar { background: #444; border-radius: 3px; overflow: hidden; }
+#goal-progress { background: #007acc; height: 6px; border-radius: 3px; transition: width 0.3s; } 

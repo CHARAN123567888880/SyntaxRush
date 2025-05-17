@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SyntaxRush - Code Typing Practice</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #333;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --accent-color: #007acc;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f0f0f0;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--bg-secondary);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #444;
+        }
+
+        .sidebar h2 {
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .sidebar a {
+            color: var(--text-primary);
+            text-decoration: none;
+            margin: 10px 0;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .sidebar a:hover {
+            background-color: var(--accent-color);
+        }
+
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid #444;
+        }
+
+        .metrics-bar {
+            display: flex;
+            gap: 20px;
+            padding: 10px 20px;
+            background-color: var(--bg-secondary);
+        }
+
+        .metric {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .metric span {
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .editor-container {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #monaco-editor {
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls {
+            padding: 10px 20px;
+            background-color: var(--bg-secondary);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select, button {
+            padding: 8px 12px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid #444;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+        }
+
+        .theme-switch {
+            margin-left: auto;
+        }
+
+        .code-visual-feedback {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 18px;
+            background: #222;
+            color: #fff;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            min-height: 60px;
+        }
+        .code-char {
+            padding: 0 1px;
+            border-radius: 2px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .code-char.correct {
+            color: #4caf50;
+        }
+        .code-char.incorrect {
+            color: #e57373;
+            text-decoration: underline wavy #e57373;
+        }
+        .code-char.current {
+            background: #ffd54f;
+            color: #222;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>SyntaxRush</h2>
+        <a href="#" class="active">Practice</a>
+        <a href="#">Challenges</a>
+        <a href="#">Leaderboard</a>
+        <a href="#">Custom Snippets</a>
+        <a href="#">Profile</a>
+        <a href="#">Settings</a>
+    </div>
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="language-select">
+                <select id="language-select">
+                    <option value="javascript">JavaScript</option>
+                    <option value="python">Python</option>
+                    <option value="java">Java</option>
+                    <option value="cpp">C++</option>
+                </select>
+            </div>
+            <div class="theme-switch">
+                <button id="theme-toggle">Toggle Theme</button>
+            </div>
+        </div>
+        <div class="metrics-bar">
+            <div>
+                <span>Speed: <span id="wpm">0</span>wpm <span id="wpm-delta"></span></span>
+                <span>Accuracy: <span id="accuracy">100</span>% <span id="accuracy-delta"></span></span>
+                <span>Score: <span id="score">0</span> <span id="score-delta"></span></span>
+            </div>
+            <div>
+                All keys:
+                <span id="key-progress"></span>
+            </div>
+            <div>
+                Current key: <span id="current-key"></span>
+                Last speed: <span id="last-speed"></span>
+                Top speed: <span id="top-speed"></span>
+                Learning rate: <span id="learning-rate"></span>
+            </div>
+            <div>
+                Accuracy: <span id="accuracy-streak"></span>
+            </div>
+            <div>
+                Daily goal: <span id="daily-goal"></span>
+                <div id="goal-bar" style="background:#444;height:6px;width:200px;display:inline-block;vertical-align:middle;">
+                    <div id="goal-progress" style="background:#007acc;height:6px;width:0;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="editor-container">
+            <div id="monaco-editor"></div>
+            <div id="code-visual-feedback" class="code-visual-feedback"></div>
+        </div>
+        <div class="controls">
+            <button id="start-btn">Start Challenge</button>
+            <button id="reset-btn">Reset</button>
+            <button id="upload-btn">Upload Snippet</button>
+            <button id="generate-btn">Generate with AI</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Monaco Editor
+        let editor;
+        let expectedText = '';
+        let userInput = '';
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            editor = monaco.editor.create(document.getElementById('monaco-editor'), {
+                value: '',
+                language: 'javascript',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                readOnly: false
+            });
+
+            // Theme toggle
+            const themeToggle = document.getElementById('theme-toggle');
+            let isDarkTheme = true;
+
+            themeToggle.addEventListener('click', () => {
+                isDarkTheme = !isDarkTheme;
+                document.body.setAttribute('data-theme', isDarkTheme ? 'dark' : 'light');
+                monaco.editor.setTheme(isDarkTheme ? 'vs-dark' : 'vs-light');
+            });
+
+            // Language selection
+            const languageSelect = document.getElementById('language-select');
+            languageSelect.addEventListener('change', (e) => {
+                monaco.editor.setModelLanguage(editor.getModel(), e.target.value);
+            });
+
+            // Metrics tracking
+            let startTime;
+            let totalKeystrokes = 0;
+            let correctKeystrokes = 0;
+
+            editor.onDidChangeModelContent(() => {
+                if (!startTime) {
+                    startTime = Date.now();
+                }
+                totalKeystrokes++;
+                // Update metrics
+                updateMetrics();
+                // Update code visual feedback
+                userInput = editor.getValue();
+                renderCodeFeedbackTokens(expectedText, userInput);
+            });
+
+            function updateMetrics() {
+                const elapsedTime = (Date.now() - startTime) / 1000;
+                const wpm = calculateWPM(totalKeystrokes, elapsedTime);
+                const accuracy = calculateAccuracy(correctKeystrokes, totalKeystrokes);
+                
+                document.getElementById('wpm').textContent = Math.round(wpm);
+                document.getElementById('accuracy').textContent = Math.round(accuracy);
+                document.getElementById('time').textContent = formatTime(elapsedTime);
+            }
+
+            function calculateWPM(keystrokes, seconds) {
+                return (keystrokes / 5) / (seconds / 60);
+            }
+
+            function calculateAccuracy(correct, total) {
+                return (correct / total) * 100 || 100;
+            }
+
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            // Helper to split code into tokens (words, identifiers, symbols)
+            function tokenizeCode(code) {
+                // Simple regex for code tokens: identifiers, numbers, symbols, whitespace
+                return code.match(/\w+|[^\s\w]+|\s+/g) || [];
+            }
+
+            // Helper to render code with feedback at the token level (no dot separator)
+            function renderCodeFeedbackTokens(target, userInput) {
+                const container = document.getElementById('code-visual-feedback');
+                if (!container) return;
+                const targetTokens = tokenizeCode(target);
+                const userTokens = tokenizeCode(userInput);
+                let html = '';
+                for (let i = 0; i < targetTokens.length; i++) {
+                    let cls = 'code-char';
+                    if (i < userTokens.length) {
+                        if (userTokens[i] === targetTokens[i]) cls += ' correct';
+                        else cls += ' incorrect';
+                    }
+                    if (i === userTokens.length) cls += ' current';
+                    html += `<span class=\"${cls}\">${targetTokens[i].replace(/ /g, '&nbsp;')}</span>`;
+                }
+                container.innerHTML = html;
+            }
+
+            // Challenge controls
+            document.getElementById('start-btn').addEventListener('click', () => {
+                if (window.challengeManager) {
+                    const language = document.getElementById('language-select').value;
+                    const challenge = window.challengeManager.startChallenge(language);
+                    if (challenge) {
+                        expectedText = challenge.code;
+                        editor.setValue('');
+                        userInput = '';
+                        renderCodeFeedbackTokens(expectedText, userInput);
+                        return;
+                    }
+                }
+                expectedText = '// Start typing here...';
+                editor.setValue('');
+                userInput = '';
+                renderCodeFeedbackTokens(expectedText, userInput);
+            });
+
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                editor.setValue('');
+                userInput = '';
+                renderCodeFeedbackTokens(expectedText, userInput);
+            });
+
+            // Initial render
+            renderCodeFeedbackTokens('// Start typing here...', '');
+        });
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>
