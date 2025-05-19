@@ -97,11 +97,15 @@
             flex-grow: 1;
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         #monaco-editor {
             width: 100%;
             height: 100%;
+            position: relative;
+            z-index: 1;
         }
 
         .controls {
@@ -131,15 +135,18 @@
 
         .code-visual-feedback {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 18px;
-            background: #222;
-            color: #fff;
+            font-size: 14px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             padding: 16px;
             border-radius: 6px;
-            margin-bottom: 12px;
+            margin: 12px;
             white-space: pre-wrap;
             word-break: break-all;
             min-height: 60px;
+            border: 1px solid var(--bg-secondary);
+            position: relative;
+            z-index: 2;
         }
         .code-char {
             padding: 0 1px;
@@ -157,6 +164,10 @@
             background: #ffd54f;
             color: #222;
             text-decoration: underline;
+        }
+        .code-char.untyped {
+            opacity: 0.4;
+            color: #888;
         }
     </style>
 </head>
@@ -271,6 +282,7 @@
                 updateMetrics();
                 // Update code visual feedback
                 userInput = editor.getValue();
+                console.log('onDidChangeModelContent', { expectedText, userInput });
                 renderCodeFeedbackTokens(expectedText, userInput);
             });
 
@@ -300,25 +312,30 @@
 
             // Helper to split code into tokens (words, identifiers, symbols)
             function tokenizeCode(code) {
-                // Simple regex for code tokens: identifiers, numbers, symbols, whitespace
-                return code.match(/\w+|[^\s\w]+|\s+/g) || [];
+                if (!code) return [];
+                // Split by whitespace and keep the whitespace
+                return code.split(/(\s+)/).filter(token => token.length > 0);
             }
 
-            // Helper to render code with feedback at the token level (no dot separator)
+            // Helper to render code with feedback at the token level
             function renderCodeFeedbackTokens(target, userInput) {
                 const container = document.getElementById('code-visual-feedback');
                 if (!container) return;
-                const targetTokens = tokenizeCode(target);
-                const userTokens = tokenizeCode(userInput);
+                console.log('renderCodeFeedbackTokens', { target, userInput });
                 let html = '';
-                for (let i = 0; i < targetTokens.length; i++) {
+                for (let i = 0; i < target.length; i++) {
                     let cls = 'code-char';
-                    if (i < userTokens.length) {
-                        if (userTokens[i] === targetTokens[i]) cls += ' correct';
-                        else cls += ' incorrect';
+                    if (i < userInput.length && userInput[i] === target[i]) {
+                        cls += ' correct';
+                    } else if (i < userInput.length && userInput[i] !== target[i]) {
+                        cls += ' incorrect';
+                    } else if (i === userInput.length) {
+                        cls += ' current';
+                    } else {
+                        cls += ' untyped';
                     }
-                    if (i === userTokens.length) cls += ' current';
-                    html += `<span class=\"${cls}\">${targetTokens[i].replace(/ /g, '&nbsp;')}</span>`;
+                    let char = target[i] === ' ' ? '&nbsp;' : target[i];
+                    html += `<span class="${cls}">${char}</span>`;
                 }
                 container.innerHTML = html;
             }
